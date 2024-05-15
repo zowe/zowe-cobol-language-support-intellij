@@ -191,7 +191,8 @@ class CobolPluginState private constructor() : Disposable {
           extensions.joinToString(","),
           arrayOf(
             "java",
-            "-jar", lspServerPathString,
+            "-jar",
+            "\"$lspServerPathString\"",
             "pipeEnabled"
           )
         )
