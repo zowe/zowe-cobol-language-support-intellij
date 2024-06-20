@@ -5,7 +5,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2024
+ * Copyright Contributors to the Zowe Project
  */
 
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
@@ -23,23 +23,16 @@ version = properties("pluginVersion").get()
 
 repositories {
   mavenCentral()
-  maven {
-    url = uri("https://jitpack.io") // lsp4intellij
-  }
-}
-
-dependencies {
-  // TODO: update the dependency to fix the issues asap
-  // CVE-2023-2976 - no impact on the project (25.04.2024)
-  // CVE-2020-8908 - no impact on the project (25.04.2024)
-  implementation("com.github.ballerina-platform:lsp4intellij:0.96.0")
 }
 
 // Configure Gradle IntelliJ Plugin
 // Read more: https://plugins.jetbrains.com/docs/intellij/tools-gradle-intellij-plugin.html
 intellij {
   version.set(properties("platformVersion").get())
-  plugins.set(listOf("org.jetbrains.plugins.textmate"))
+//  pluginsRepositories {
+//    custom("https://plugins.jetbrains.com/plugins/nightly/23257")
+//  }
+  plugins.set(listOf("org.jetbrains.plugins.textmate", "com.redhat.devtools.lsp4ij:0.0.1"))
 }
 
 tasks {
