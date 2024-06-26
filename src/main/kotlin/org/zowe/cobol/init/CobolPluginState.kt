@@ -5,7 +5,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2024
+ * Copyright Contributors to the Zowe Project
  */
 
 package org.zowe.cobol.init
@@ -16,16 +16,16 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.io.ZipUtil
 import com.jetbrains.rd.util.firstOrNull
-import org.zowe.cobol.lsp.CobolLSPExtensionManager
-import org.zowe.cobol.lsp.CobolServerDefinition
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.textmate.TextMateService
 import org.jetbrains.plugins.textmate.configuration.TextMateUserBundlesSettings
 import org.jetbrains.plugins.textmate.plist.JsonPlistReader
-import org.wso2.lsp4intellij.IntellijLanguageClient
-import org.wso2.lsp4intellij.utils.FileUtils
 import com.intellij.openapi.util.io.FileUtil
+import com.redhat.devtools.lsp4ij.client.LanguageClientImpl
+import com.redhat.devtools.lsp4ij.server.JavaProcessCommandBuilder
+import com.redhat.devtools.lsp4ij.server.ProcessStreamConnectionProvider
+import org.zowe.cobol.lsp.CobolLanguageClient
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.pathString
@@ -87,7 +87,7 @@ class CobolPluginState private constructor() : Disposable {
    */
   @InitializationOnly
   suspend fun unpackVSIX() {
-    if (currState != InitStates.DOWN) throw IllegalStateException("Invalid plug-in state. Expected: ${InitStates.DOWN}, current: $currState")
+//    if (currState != InitStates.DOWN) throw IllegalStateException("Invalid plug-in state. Expected: ${InitStates.DOWN}, current: $currState")
     val doPathsAlreadyExist = computeVSIXPlacingPaths()
     if (!doPathsAlreadyExist) {
       val activeClassLoader = this::class.java.classLoader
@@ -116,8 +116,8 @@ class CobolPluginState private constructor() : Disposable {
    * loaded to the IDE stays there
    */
   @InitializationOnly
-  fun loadTextMateBundle() {
-    if (currState < InitStates.VSIX_UNPACKED) throw IllegalStateException("Invalid plug-in state. Expected: at least ${InitStates.VSIX_UNPACKED}, current: $currState")
+  fun loadLanguageClientDefinition(project: Project): LanguageClientImpl {
+//    if (currState < InitStates.VSIX_UNPACKED) throw IllegalStateException("Invalid plug-in state. Expected: at least ${InitStates.VSIX_UNPACKED}, current: $currState")
     currState = InitStates.TEXTMATE_BUNDLE_LOAD_TRIGGERED
     val emptyBundleName = "$TEXTMATE_BUNDLE_NAME-0.0.0"
     val newBundleName = "$TEXTMATE_BUNDLE_NAME-$VSIX_VERSION"
@@ -133,6 +133,7 @@ class CobolPluginState private constructor() : Disposable {
       TextMateService.getInstance().reloadEnabledBundles()
     }
     currState = InitStates.TEXTMATE_BUNDLE_LOADED
+    return CobolLanguageClient(project)
   }
 
   /** Extract COBOL language extensions, supported for recognition, from package.json in resources */
@@ -176,35 +177,25 @@ class CobolPluginState private constructor() : Disposable {
     return cobolExtensions
   }
 
-  /** Initialize LSP server and client, setup their communication. Will get the server.jar from the unzipped .vsix */
+  /** Initialize language server definition. Will run the LSP server command */
   @InitializationOnly
-  fun loadLSP() {
-    if (currState < InitStates.VSIX_UNPACKED) throw IllegalStateException("Invalid plug-in state. Expected: at least ${InitStates.VSIX_UNPACKED}, current: $currState")
+  fun loadLanguageServerDefinition(project: Project): ProcessStreamConnectionProvider {
+//    if (currState < InitStates.VSIX_UNPACKED) throw IllegalStateException("Invalid plug-in state. Expected: at least ${InitStates.VSIX_UNPACKED}, current: $currState")
     currState = InitStates.LSP_LOAD_TRIGGERED
     val lspServerPathString = lspServerPath.pathString
-    val extensions = extractExtensionsFromPackageJson()
-    val manager = CobolLSPExtensionManager()
-
-    IntellijLanguageClient
-      .addServerDefinition(
-        CobolServerDefinition(
-          extensions.joinToString(","),
-          arrayOf(
-            "java",
-            "-jar",
-            "\"$lspServerPathString\"",
-            "pipeEnabled"
-          )
-        )
-      )
-    extensions.forEach { extension -> IntellijLanguageClient.addExtensionManager(extension, manager) }
+//    val extensions = extractExtensionsFromPackageJson()
+    val commands: MutableList<String> = JavaProcessCommandBuilder(project, "cobol")
+      .setJar(lspServerPathString)
+      .create()
+    commands.add("pipeEnabled")
     currState = InitStates.LSP_LOADED
+    return object : ProcessStreamConnectionProvider(commands) {}
   }
 
   /** Initialization final step, no direct purposes for now */
   @InitializationOnly
   fun finishInitialization(project: Project) {
-    if (currState < InitStates.LSP_LOADED) throw IllegalStateException("Invalid plug-in state. Expected: at least ${InitStates.LSP_LOADED}, current: $currState")
+    if (currState != InitStates.LSP_LOADED || currState != InitStates.TEXTMATE_BUNDLE_LOADED) throw IllegalStateException("Invalid plug-in state. Expected: at least ${InitStates.LSP_LOADED}, current: $currState")
     stateProject = project
     currState = InitStates.UP
   }
@@ -221,16 +212,17 @@ class CobolPluginState private constructor() : Disposable {
     currState = InitStates.TEXTMATE_BUNDLE_UNLOADED
   }
 
-  /** Disable LSP server wrappers together with LSP servers for the project before the plug-in's state is disposed */
-  @InitializationOnly
-  fun disableLSP() {
-    if (currState > InitStates.TEXTMATE_BUNDLE_UNLOADED) throw IllegalStateException("Invalid plug-in state. Expected: at most ${InitStates.TEXTMATE_BUNDLE_UNLOADED}, current: $currState")
-    currState = InitStates.LSP_UNLOAD_TRIGGERED
-    val projectPath = FileUtils.projectToUri(stateProject)
-    val serverWrappers = IntellijLanguageClient.getAllServerWrappersFor(projectPath)
-    serverWrappers.forEach { it.stop(true) }
-    currState = InitStates.LSP_UNLOADED
-  }
+  // TODO: finish, doc
+//  /** Disable LSP server wrappers together with LSP servers for the project before the plug-in's state is disposed */
+//  @InitializationOnly
+//  fun disableLSP() {
+//    if (currState > InitStates.TEXTMATE_BUNDLE_UNLOADED) throw IllegalStateException("Invalid plug-in state. Expected: at most ${InitStates.TEXTMATE_BUNDLE_UNLOADED}, current: $currState")
+//    currState = InitStates.LSP_UNLOAD_TRIGGERED
+//    val projectPath = FileUtils.projectToUri(stateProject)
+//    val serverWrappers = IntellijLanguageClient.getAllServerWrappersFor(projectPath)
+//    serverWrappers.forEach { it.stop(true) }
+//    currState = InitStates.LSP_UNLOADED
+//  }
 
   /** Deinitialization final step, disposing purposes */
   @InitializationOnly

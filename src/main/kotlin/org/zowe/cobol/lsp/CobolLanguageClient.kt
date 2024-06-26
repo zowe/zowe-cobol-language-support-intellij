@@ -5,16 +5,14 @@
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright IBA Group 2024
+ * Copyright Contributors to the Zowe Project
  */
 
 package org.zowe.cobol.lsp
 
+import com.intellij.openapi.project.Project
+import com.redhat.devtools.lsp4ij.client.LanguageClientImpl
 import org.eclipse.lsp4j.ConfigurationParams
-import org.eclipse.lsp4j.ProgressParams
-import org.eclipse.lsp4j.WorkDoneProgressCreateParams
-import org.wso2.lsp4intellij.client.ClientContext
-import org.wso2.lsp4intellij.client.DefaultLanguageClient
 import java.util.concurrent.CompletableFuture
 
 private const val DIALECT_REGISTRY_SECTION = "cobol-lsp.dialect.registry"
@@ -27,7 +25,7 @@ private const val SETTINGS_CPY_FILE_ENCODING = "cobol-lsp.cpy-manager.copybook-f
 private const val SETTINGS_COMPILE_OPTIONS = "cobol-lsp.compiler.options"
 
 /** COBOL LSP client wrapper. Provides a comprehensive support for the COBOL LSP communications */
-class CobolLanguageClient(context: ClientContext) : DefaultLanguageClient(context) {
+class CobolLanguageClient(project: Project) : LanguageClientImpl(project) {
 
   /**
    * "workspace/configuration" request from LSP server handler.
@@ -125,24 +123,4 @@ class CobolLanguageClient(context: ClientContext) : DefaultLanguageClient(contex
     return CompletableFuture.completedFuture(result)
   }
 
-  /**
-   * "window/workDoneProgress/create" request from LSP server handler.
-   * Handles the document analysis progress message
-   * @param params the progress parameters
-   */
-  // TODO: write the progress handler wrapper for the IntelliJ UI
-  override fun createProgress(params: WorkDoneProgressCreateParams?): CompletableFuture<Void> {
-    println("window/workDoneProgress/create message came with params: $params")
-    return CompletableFuture.completedFuture(null)
-  }
-
-  /**
-   * "$/progress" request from LSP server handler.
-   * Handles the document analysis progress message
-   * @param params the progress parameters
-   */
-  // TODO: write the progress handler wrapper for the IntelliJ UI
-  override fun notifyProgress(params: ProgressParams?) {
-    println("$/progress message came with params: $params")
-  }
 }
