@@ -16,10 +16,14 @@ plugins {
   id("java")
   id("org.jetbrains.kotlin.jvm") version "1.9.21"
   id("org.jetbrains.intellij") version "1.16.1"
+  id("org.jetbrains.kotlinx.kover") version "0.8.1"
 }
 
 group = properties("pluginGroup").get()
 version = properties("pluginVersion").get()
+val kotestVersion = "5.9.1"
+val mockkVersion = "1.13.11"
+val junitVersion = ""
 
 repositories {
   mavenCentral()
@@ -32,7 +36,20 @@ intellij {
 //  pluginsRepositories {
 //    custom("https://plugins.jetbrains.com/plugins/nightly/23257")
 //  }
-  plugins.set(listOf("org.jetbrains.plugins.textmate", "com.redhat.devtools.lsp4ij:0.0.1"))
+  plugins.set(listOf("org.jetbrains.plugins.textmate", "com.redhat.devtools.lsp4ij:0.0.2"))
+}
+
+dependencies {
+  // ===== Test env setup =====
+  // Kotest
+  testImplementation("io.kotest:kotest-runner-junit5:$kotestVersion")
+  testImplementation("io.kotest:kotest-assertions-core:$kotestVersion")
+  // MockK
+  testImplementation("io.mockk:mockk:$mockkVersion")
+  // JUnit Platform (needed for Kotest)
+  testImplementation("org.junit.platform:junit-platform-launcher:1.10.2")
+  // ==========================
+
 }
 
 tasks {
@@ -49,5 +66,13 @@ tasks {
     version.set(properties("pluginVersion").get())
     sinceBuild.set(properties("pluginSinceBuild").get())
     untilBuild.set(properties("pluginUntilBuild").get())
+  }
+
+  test {
+    useJUnitPlatform()
+    testLogging {
+      events("passed", "skipped", "failed")
+    }
+    finalizedBy("koverHtmlReport")
   }
 }

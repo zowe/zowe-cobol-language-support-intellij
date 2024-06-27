@@ -24,7 +24,11 @@ jobs:
         shell: bash
         run: pwd && ls -la
 
-      - name: Build plugin
+      - name: Test plugin
+        shell: bash
+        run: ./gradlew test
+
+      - name: Build plugin's binary
         shell: bash
         run: ./gradlew buildPlugin
 
