@@ -1,4 +1,4 @@
-# COBOL Language Support plug-in for IntelliJ IDEA™
+# Zowe™ COBOL Language Support plug-in for IntelliJ IDEA™
 
 Provides: 
 - syntax highlighting support using TextMate bundle from [eclipse-che4z/che-che4z-lsp-for-cobol](https://github.com/eclipse-che4z/che-che4z-lsp-for-cobol)
@@ -7,7 +7,7 @@ Provides:
 ## Prerequisites
 
 - Java v17
-- IntelliJ v2023.2
+- IntelliJ v2023.2 or later
 
 ## How to run (user)
 
@@ -18,3 +18,7 @@ Provides:
 ## How to run (developer)
 
 - Open the folder with the project, run "Run plugin" configuration, wait for the other instance of IDE to run
+
+or
+
+- Download latest [GitHub Actions build](https://github.com/zowe/zowe-cobol-language-support-intellij/actions/workflows/build.yml)
