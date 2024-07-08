@@ -23,6 +23,11 @@
   <depends>com.redhat.devtools.lsp4ij</depends>
   <depends>org.jetbrains.plugins.textmate</depends>
 
+  <extensions defaultExtensionNs="com.intellij">
+    <notificationGroup displayType="STICKY_BALLOON"
+                       id="org.zowe.cobol.CobolNotificationId"/>
+  </extensions>
+
   <extensions defaultExtensionNs="com.redhat.devtools.lsp4ij">
     <server id="org.zowe.cobol.lsp.CobolLanguageServerFactory"
             name="COBOL Language Server"
@@ -37,5 +42,10 @@
                             serverId="org.zowe.cobol.lsp.CobolLanguageServerFactory"
                             languageId="cobol"/>
   </extensions>
+
+  <projectListeners>
+    <listener class="org.zowe.cobol.CobolProjectManagerListener"
+              topic="com.intellij.openapi.project.ProjectManagerListener"/>
+  </projectListeners>
 
 </idea-plugin>
