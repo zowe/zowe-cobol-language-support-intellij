@@ -1,11 +1,15 @@
 /*
+ * Copyright (c) 2024 IBA Group.
+ *
  * This program and the accompanying materials are made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copyright Contributors to the Zowe Project
+ * Contributors:
+ *   IBA Group
+ *   Zowe Community
  */
 
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
@@ -22,8 +26,8 @@ plugins {
 group = properties("pluginGroup").get()
 version = properties("pluginVersion").get()
 val kotestVersion = "5.9.1"
-val mockkVersion = "1.13.11"
-val junitVersion = ""
+val mockkVersion = "1.13.12"
+val junitVersion = "1.10.3"
 
 repositories {
   mavenCentral()
@@ -36,7 +40,7 @@ intellij {
 //  pluginsRepositories {
 //    custom("https://plugins.jetbrains.com/plugins/nightly/23257")
 //  }
-  plugins.set(listOf("org.jetbrains.plugins.textmate", "com.redhat.devtools.lsp4ij:0.0.2"))
+  plugins.set(listOf("org.jetbrains.plugins.textmate", "com.redhat.devtools.lsp4ij:0.4.0"))
 }
 
 dependencies {
@@ -47,7 +51,7 @@ dependencies {
   // MockK
   testImplementation("io.mockk:mockk:$mockkVersion")
   // JUnit Platform (needed for Kotest)
-  testImplementation("org.junit.platform:junit-platform-launcher:1.10.2")
+  testImplementation("org.junit.platform:junit-platform-launcher:$junitVersion")
   // ==========================
 
 }
