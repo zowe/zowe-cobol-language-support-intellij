@@ -40,7 +40,7 @@ class LanguageSupportStateServiceTestSpec : FunSpec({
 
       val lsStateService = spyk(LanguageSupportStateService(), recordPrivateCalls = true)
       mockkObject(LanguageSupportStateService)
-      every { LanguageSupportStateService.instance } returns lsStateService
+      every { LanguageSupportStateService.getService() } returns lsStateService
 
       setPrivateFieldValue(
         lsStateService,
@@ -49,7 +49,7 @@ class LanguageSupportStateServiceTestSpec : FunSpec({
         mutableMapOf(projectMock to lsStateMock)
       )
 
-      val result = LanguageSupportStateService.instance.getPluginState(projectMock) { defaultLSStateMock }
+      val result = LanguageSupportStateService.getService().getPluginState(projectMock) { defaultLSStateMock }
 
       assertSoftly { result shouldBe lsStateMock }
     }
@@ -61,7 +61,7 @@ class LanguageSupportStateServiceTestSpec : FunSpec({
 
       val lsStateService = spyk(LanguageSupportStateService(), recordPrivateCalls = true)
       mockkObject(LanguageSupportStateService)
-      every { LanguageSupportStateService.instance } returns lsStateService
+      every { LanguageSupportStateService.getService() } returns lsStateService
 
       setPrivateFieldValue(
         lsStateService,
@@ -70,7 +70,7 @@ class LanguageSupportStateServiceTestSpec : FunSpec({
         mutableMapOf(mockk<Project>() to lsStateMock)
       )
 
-      val result = LanguageSupportStateService.instance.getPluginState(projectMock) { defaultLSStateMock }
+      val result = LanguageSupportStateService.getService().getPluginState(projectMock) { defaultLSStateMock }
 
       assertSoftly { result shouldBe defaultLSStateMock }
     }

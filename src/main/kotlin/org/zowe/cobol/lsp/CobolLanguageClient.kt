@@ -16,24 +16,13 @@ package org.zowe.cobol.lsp
 
 import com.intellij.openapi.project.Project
 import com.redhat.devtools.lsp4ij.client.LanguageClientImpl
-import org.eclipse.lsp4j.ConfigurationParams
-import org.eclipse.lsp4j.MessageParams
-import org.eclipse.lsp4j.MessageType
+import org.eclipse.lsp4j.*
+import org.eclipse.lsp4j.jsonrpc.services.JsonRequest
+import org.zowe.cobol.Sections
+import org.zowe.cobol.VSCodeSettingsAdapterService
+import java.net.URI
 import java.util.concurrent.CompletableFuture
-
-const val DIALECT_REGISTRY_SECTION = "cobol-lsp.dialect.registry"
-const val SETTINGS_DIALECT = "cobol-lsp.dialects"
-const val SETTINGS_CPY_LOCAL_PATH = "cobol-lsp.cpy-manager.paths-local"
-const val DIALECT_LIBS = "cobol-lsp.dialect.libs"
-const val SETTINGS_CPY_EXTENSIONS = "cobol-lsp.cpy-manager.copybook-extensions"
-const val SETTINGS_SQL_BACKEND = "cobol-lsp.target-sql-backend"
-const val SETTINGS_CPY_FILE_ENCODING = "cobol-lsp.cpy-manager.copybook-file-encoding"
-const val SETTINGS_COMPILE_OPTIONS = "cobol-lsp.compiler.options"
-const val SETTINGS_CLIENT_LOGGING_LEVEL = "cobol-lsp.logging.level.root"
-const val SETTINGS_LOCALE = "cobol-lsp.locale"
-const val SETTINGS_COBOL_PROGRAM_LAYOUT = "cobol-lsp.cobol.program.layout"
-const val SETTINGS_SUBROUTINE_LOCAL_PATH = "cobol-lsp.subroutine-manager.paths-local"
-const val SETTINGS_CICS_TRANSLATOR = "cobol-lsp.cics.translator"
+import kotlin.io.path.toPath
 
 /** COBOL LSP client wrapper. Provides a comprehensive support for the COBOL LSP communications */
 class CobolLanguageClient(project: Project) : LanguageClientImpl(project) {
@@ -48,84 +37,109 @@ class CobolLanguageClient(project: Project) : LanguageClientImpl(project) {
   override fun configuration(configurationParams: ConfigurationParams?): CompletableFuture<MutableList<Any?>> {
     val result = mutableListOf<Any?>()
     for (item in configurationParams?.items ?: emptyList()) {
+      val section = Sections(item.section)
       try {
-        if (item.section == DIALECT_REGISTRY_SECTION) {
+        if (section == Sections.DIALECT_REGISTRY) {
           logMessage(MessageParams(MessageType.Info, "${item.section} is not correctly recognized yet 1"))
           result.add(emptyList<String>())
-//          val computed = DialectRegistry.getDialects()
-//          result.add(computed)
-        } else if (item.scopeUri != "") {
+//          val dialectInfos = DialectsService.getService().getDialects()
+//          logMessage(MessageParams(MessageType.Info, "Registered dialects: $dialectInfos"))
+//          result.add(dialectInfos)
+        } else if (item.scopeUri != null && item.scopeUri != "") {
+          val workspaceFolders = this.workspaceFolders().get().map { pathObj -> URI.create(pathObj.uri).toPath() }
 //          val cfg = vscode.workspace.getConfiguration().get(item.section)
-          when (item.section) {
-            SETTINGS_DIALECT -> {
+          when (section) {
+            Sections.DIALECTS_SECTION -> {
               logMessage(MessageParams(MessageType.Info, "${item.section} is not correctly recognized yet 2"))
               result.add(emptyList<String>())
-        //            val computed = loadProcessorGroupDialectConfig(item, cfg)
-        //            result.add(computed)
+//              val settingsCfg = VSCodeSettingsAdapterService.getService()
+//                .getListOfStringsConfiguration(workspaceFolders[0], Sections.DIALECTS_SECTION)
+//              val dialects = CobolConfigsRecognitionService.getService()
+//                .loadProcessorGroupDialectConfig(workspaceFolders[0], item, settingsCfg)
+//              logMessage(MessageParams(MessageType.Info, "For ${item.scopeUri} using dialects: $dialects"))
+//              result.add()
+//              result.add(dialects)
             }
-            SETTINGS_CPY_LOCAL_PATH -> {
-              logMessage(MessageParams(MessageType.Info, "${item.section} is not recognized yet 3"))
-        //            val computed = loadProcessorGroupCopybookPathsConfig(item, cfg as List<String>)
-        //            result.add(computed)
-        //          } else if (item.section === DIALECT_LIBS && !!item.dialect) {
+
+            Sections.CPY_LOCAL_PATH -> {
+              val settingsCfg = VSCodeSettingsAdapterService.getService()
+                .getListOfStringsConfiguration(workspaceFolders[0], Sections.CPY_LOCAL_PATH)
+              val cpyLocalPaths = CobolConfigsRecognitionService.getService()
+                .loadProcessorGroupCopybookPathsConfig(workspaceFolders[0], item, settingsCfg)
+              logMessage(
+                MessageParams(MessageType.Info, "For ${item.scopeUri} using cpy local paths: $cpyLocalPaths")
+              )
+              result.add(cpyLocalPaths)
             }
-            DIALECT_LIBS -> {
-              logMessage(MessageParams(MessageType.Info, "${item.section} is not recognized yet 4"))
-        //            val dialectLibs = SettingsService.getCopybookLocalPath(item.scopeUri, item.dialect)
-        //            result.add(dialectLibs)
+
+            Sections.DIALECT_LIBS -> {
+              logMessage(MessageParams(MessageType.Info, "$section is not recognized yet 3"))
+              //            val dialectLibs = SettingsService.getCopybookLocalPath(item.scopeUri, item.dialect)
+              //            result.add(dialectLibs)
             }
-            SETTINGS_CPY_EXTENSIONS -> {
-              logMessage(MessageParams(MessageType.Info, "${item.section} is not correctly recognized 5"))
-              result.add(listOf(".CPY", ".COPY", ".cpy", ".copy",""))
-        //            val computed = loadProcessorGroupCopybookExtensionsConfig(item, cfg as List<String>)
-        //            result.add(computed)
+
+            Sections.CPY_EXTENSIONS -> {
+              logMessage(MessageParams(MessageType.Info, "$section is not correctly recognized yet 4"))
+              result.add(listOf(".CPY", ".COPY", ".cpy", ".copy", ""))
+              //            val computed = loadProcessorGroupCopybookExtensionsConfig(item, cfg as List<String>)
+              //            result.add(computed)
             }
-            SETTINGS_SQL_BACKEND -> {
-              logMessage(MessageParams(MessageType.Info, "${item.section} is not correctly recognized yet 6"))
+
+            Sections.SQL_BACKEND -> {
+              logMessage(MessageParams(MessageType.Info, "$section is not correctly recognized yet 5"))
               result.add("DB2_SERVER")
-        //            val computed = loadProcessorGroupSqlBackendConfig(item, cfg as String)
-        //            result.add(computed)
+              //            val computed = loadProcessorGroupSqlBackendConfig(item, cfg as String)
+              //            result.add(computed)
             }
-            SETTINGS_CPY_FILE_ENCODING -> {
-              logMessage(MessageParams(MessageType.Info, "${item.section} is not recognized yet 7"))
-        //            val computed = loadProcessorGroupCopybookEncodingConfig(item, cfg as String)
-        //            result.add(computed)
+
+            Sections.CPY_FILE_ENCODING -> {
+              logMessage(MessageParams(MessageType.Info, "$section is not recognized yet 6"))
+              //            val computed = loadProcessorGroupCopybookEncodingConfig(item, cfg as String)
+              //            result.add(computed)
             }
-            SETTINGS_COMPILE_OPTIONS -> {
-              logMessage(MessageParams(MessageType.Info, "${item.section} is not correctly recognized yet 8"))
+
+            Sections.COMPILER_OPTIONS -> {
+              logMessage(MessageParams(MessageType.Info, "$section is not correctly recognized yet 7"))
               result.add(null)
-        //            val computed = loadProcessorGroupCompileOptionsConfig(item, cfg as String)
-        //            result.add(computed)
+              //            val computed = loadProcessorGroupCompileOptionsConfig(item, cfg as String)
+              //            result.add(computed)
             }
-            SETTINGS_CLIENT_LOGGING_LEVEL -> {
-              logMessage(MessageParams(MessageType.Info, "${item.section} is not correctly recognized 11"))
+
+            Sections.LOGGIN_LEVEL_ROOT -> {
+              logMessage(MessageParams(MessageType.Info, "$section is not correctly recognized yet 8"))
               result.add("ERROR")
             }
-            SETTINGS_LOCALE -> {
-              logMessage(MessageParams(MessageType.Info, "${item.section} is not correctly recognized 12"))
+
+            Sections.LOCALE -> {
+              logMessage(MessageParams(MessageType.Info, "$section is not correctly recognized yet 9"))
               result.add("en")
             }
-            SETTINGS_COBOL_PROGRAM_LAYOUT -> {
-              logMessage(MessageParams(MessageType.Info, "${item.section} is not correctly recognized yet 12"))
+
+            Sections.COBOL_PROGRAM_LAYOUT -> {
+              logMessage(MessageParams(MessageType.Info, "$section is not correctly recognized yet 10"))
               result.add(null)
             }
-            SETTINGS_SUBROUTINE_LOCAL_PATH -> {
-              logMessage(MessageParams(MessageType.Info, "${item.section} is not correctly recognized yet 14"))
+
+            Sections.SUBROUTINE_LOCAL_PATH -> {
+              logMessage(MessageParams(MessageType.Info, "$section is not correctly recognized yet 11"))
               result.add(emptyList<String>())
+              //
             }
-            SETTINGS_CICS_TRANSLATOR -> {
-              logMessage(MessageParams(MessageType.Info, "${item.section} is not correctly recognized yet 15"))
+
+            Sections.CICS_TRANSLATOR -> {
+              logMessage(MessageParams(MessageType.Info, "$section is not correctly recognized yet 12"))
               result.add("true")
             }
+
             else -> {
-        //            result.add(cfg)
-              logMessage(MessageParams(MessageType.Info, "${item.section} is not recognized yet 9"))
+              //            result.add(cfg)
+              logMessage(MessageParams(MessageType.Info, "${item.section} is not recognized yet 13"))
             }
           }
         } else {
-          logMessage(MessageParams(MessageType.Info, "${item.section} is not correctly recognized yet 10"))
+          logMessage(MessageParams(MessageType.Info, "${item.section} is not correctly recognized yet 14"))
           result.add(emptyList<String>())
-//          result.add(vscode.workspace.getConfiguration().get(item.section));
+//          result.add(vscode.workspace.getConfiguration().get(item.section))
         }
       } catch (error: Throwable) {
         logMessage(MessageParams(MessageType.Error, "${error.message}\n${error.stackTrace}"))
@@ -133,5 +147,41 @@ class CobolLanguageClient(project: Project) : LanguageClientImpl(project) {
     }
     return CompletableFuture.completedFuture(result)
   }
+
+  /**
+   * Handle the "copybook/resolve" request
+   * @param documentUri the document uri string, that triggered the request
+   * @param copybookName the copybook name to resolve
+   * @param dialectType the dialect type to resolve the copybook with
+   * @return the URI path string to the resolved copybook
+   */
+  @JsonRequest("copybook/resolve")
+  fun resolveCopybook(documentUri: String, copybookName: String, dialectType: String): CompletableFuture<String?> {
+    val cpyExtenstionsConfigItem = ConfigurationItem()
+    cpyExtenstionsConfigItem.section = Sections.CPY_EXTENSIONS.toString()
+    cpyExtenstionsConfigItem.scopeUri = documentUri
+
+    val cpyLocalPathsConfigItem = ConfigurationItem()
+    cpyLocalPathsConfigItem.section = Sections.CPY_LOCAL_PATH.toString()
+    cpyLocalPathsConfigItem.scopeUri = documentUri
+
+    val configParams = ConfigurationParams(listOf(cpyExtenstionsConfigItem, cpyLocalPathsConfigItem))
+
+    return this.workspaceFolders()
+      .thenCombine<MutableList<Any?>?, String?>(this.configuration(configParams)) { workspaceFolders, cpyConfigsAny ->
+        val workspaceFolder = URI.create(workspaceFolders[0].uri).toPath()
+
+        val cpyConfigs = cpyConfigsAny as List<List<String>>
+        val cpyExtensions = cpyConfigs[0]
+        val cpyLocalPaths = cpyConfigs[1]
+
+        CobolCopybooksService.getService()
+          .resolveCopybookPath(workspaceFolder, cpyLocalPaths, copybookName, cpyExtensions)
+      }
+  }
+
+// TODO: implement custom requests
+//  @JsonRequest("cobol/resolveSubroutine")
+//  @JsonRequest("copybook/download")
 
 }

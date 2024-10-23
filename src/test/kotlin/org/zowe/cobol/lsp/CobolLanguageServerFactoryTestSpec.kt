@@ -60,7 +60,7 @@ class CobolLanguageServerFactoryTestSpec : FunSpec({
         every { getPluginState(projectMock, any<() -> LanguageSupportState>()) } returns lsStateMock
       }
       mockkObject(LanguageSupportStateService)
-      every { LanguageSupportStateService.instance } returns lsStateService
+      every { LanguageSupportStateService.getService() } returns lsStateService
 
       val cobolLanguageServerFactory = spyk(CobolLanguageServerFactory())
 
@@ -99,7 +99,7 @@ class CobolLanguageServerFactoryTestSpec : FunSpec({
         }
       }
       mockkObject(LanguageSupportStateService)
-      every { LanguageSupportStateService.instance } returns lsStateService
+      every { LanguageSupportStateService.getService() } returns lsStateService
 
       val cobolLanguageServerFactory = spyk(CobolLanguageServerFactory())
 
@@ -144,7 +144,7 @@ class CobolLanguageServerFactoryTestSpec : FunSpec({
         every { getPluginState(projectMock, any<() -> LanguageSupportState>()) } returns lsStateMock
       }
       mockkObject(LanguageSupportStateService)
-      every { LanguageSupportStateService.instance } returns lsStateService
+      every { LanguageSupportStateService.getService() } returns lsStateService
 
       val cobolLanguageServerFactory = spyk(CobolLanguageServerFactory())
 
@@ -183,7 +183,7 @@ class CobolLanguageServerFactoryTestSpec : FunSpec({
         }
       }
       mockkObject(LanguageSupportStateService)
-      every { LanguageSupportStateService.instance } returns lsStateService
+      every { LanguageSupportStateService.getService() } returns lsStateService
 
       val cobolLanguageServerFactory = spyk(CobolLanguageServerFactory())
 

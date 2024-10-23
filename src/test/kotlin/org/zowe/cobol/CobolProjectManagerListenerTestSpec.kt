@@ -69,7 +69,7 @@ class CobolProjectManagerListenerTestSpec : FunSpec({
         every { getPluginState(projectMock, any<() -> LanguageSupportState>()) } returns lsStateMock
       }
       mockkObject(LanguageSupportStateService)
-      every { LanguageSupportStateService.instance } returns lsStateServiceMock
+      every { LanguageSupportStateService.getService() } returns lsStateServiceMock
 
       cobolProjectManagerListener.projectClosing(projectMock)
 
@@ -89,7 +89,7 @@ class CobolProjectManagerListenerTestSpec : FunSpec({
         }
       }
       mockkObject(LanguageSupportStateService)
-      every { LanguageSupportStateService.instance } returns lsStateServiceMock
+      every { LanguageSupportStateService.getService() } returns lsStateServiceMock
 
       cobolProjectManagerListener.projectClosing(projectMock)
 
@@ -109,7 +109,7 @@ class CobolProjectManagerListenerTestSpec : FunSpec({
         every { getPluginState(projectMock, any<() -> LanguageSupportState>()) } returns lsStateMock
       }
       mockkObject(LanguageSupportStateService)
-      every { LanguageSupportStateService.instance } returns lsStateServiceMock
+      every { LanguageSupportStateService.getService() } returns lsStateServiceMock
 
       cobolProjectManagerListener.projectClosing(projectMock)
 
