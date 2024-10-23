@@ -12,38 +12,72 @@
  *   Zowe Community
  */
 
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 
 fun properties(key: String) = providers.gradleProperty(key)
 
 plugins {
-  id("java")
-  id("org.jetbrains.kotlin.jvm") version "1.9.21"
-  id("org.jetbrains.intellij") version "1.16.1"
-  id("org.jetbrains.kotlinx.kover") version "0.8.1"
+  java
+  kotlin("jvm") version "1.9.22"
+  id("org.jetbrains.intellij.platform") version "2.1.0"
+  id("org.jetbrains.kotlinx.kover") version "0.8.3"
 }
 
 group = properties("pluginGroup").get()
 version = properties("pluginVersion").get()
+val gsonVersion = "2.11.0"
 val kotestVersion = "5.9.1"
-val mockkVersion = "1.13.12"
-val junitVersion = "1.10.3"
+val mockkVersion = "1.13.13"
+val junitVersion = "1.11.3"
+val lsp4ijVersion = "0.7.0"
 
 repositories {
   mavenCentral()
+  intellijPlatform {
+    defaultRepositories()
+    jetbrainsRuntime()
+  }
+}
+
+java {
+  sourceCompatibility = JavaVersion.VERSION_17
+  targetCompatibility = JavaVersion.VERSION_17
+}
+
+kotlin {
+  jvmToolchain {
+    languageVersion.set(JavaLanguageVersion.of(JavaVersion.VERSION_17.toString()))
+  }
 }
 
 // Configure Gradle IntelliJ Plugin
-// Read more: https://plugins.jetbrains.com/docs/intellij/tools-gradle-intellij-plugin.html
-intellij {
-  version.set(properties("platformVersion").get())
-//  pluginsRepositories {
-//    custom("https://plugins.jetbrains.com/plugins/nightly/23257")
-//  }
-  plugins.set(listOf("org.jetbrains.plugins.textmate", "com.redhat.devtools.lsp4ij:0.4.0"))
+// Read more: https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin.html
+intellijPlatform {
+  pluginConfiguration {
+    version = properties("platformVersion").get()
+    ideaVersion {
+      sinceBuild = properties("pluginSinceBuild").get()
+      untilBuild = provider { null }
+    }
+  }
 }
 
 dependencies {
+  // ===== Runtime env setup ===
+  // IntelliJ
+  intellijPlatform {
+    intellijIdeaCommunity(properties("platformVersion").get(), useInstaller = false)
+    jetbrainsRuntime()
+    instrumentationTools()
+    bundledPlugin("org.jetbrains.plugins.textmate")
+////  pluginsRepositories {
+////    custom("https://plugins.jetbrains.com/plugins/nightly/23257")
+////  }
+    plugin("com.redhat.devtools.lsp4ij:$lsp4ijVersion")
+    testFramework(TestFrameworkType.Plugin.Java)
+  }
+  // Gson
+  implementation("com.google.code.gson:gson:$gsonVersion")
   // ===== Test env setup =====
   // Kotest
   testImplementation("io.kotest:kotest-runner-junit5:$kotestVersion")
@@ -57,21 +91,6 @@ dependencies {
 }
 
 tasks {
-  // Set the JVM compatibility versions
-  withType<JavaCompile> {
-    sourceCompatibility = JavaVersion.VERSION_17.toString()
-    targetCompatibility = JavaVersion.VERSION_17.toString()
-  }
-  withType<KotlinCompile> {
-    kotlinOptions.jvmTarget = JavaVersion.VERSION_17.toString()
-  }
-
-  patchPluginXml {
-    version.set(properties("pluginVersion").get())
-    sinceBuild.set(properties("pluginSinceBuild").get())
-    untilBuild.set(properties("pluginUntilBuild").get())
-  }
-
   test {
     useJUnitPlatform()
     testLogging {

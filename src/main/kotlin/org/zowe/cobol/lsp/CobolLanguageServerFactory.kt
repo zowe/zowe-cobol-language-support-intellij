@@ -14,7 +14,6 @@
 
 package org.zowe.cobol.lsp
 
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.redhat.devtools.lsp4ij.LanguageServerFactory
 import com.redhat.devtools.lsp4ij.client.LanguageClientImpl
