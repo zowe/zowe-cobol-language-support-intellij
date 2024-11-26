@@ -31,7 +31,7 @@ class CobolProjectManagerListener : ProjectManagerListener {
    */
   @OptIn(InitializationOnly::class)
   override fun projectClosing(project: Project) {
-    val lsStateService = LanguageSupportStateService.instance
+    val lsStateService = LanguageSupportStateService.getService()
     val pluginState = lsStateService.getPluginState(project) { CobolPluginState(project) }
 
     if (isLastProjectClosing() && (pluginState.isLSPClientReady() || pluginState.isLSPServerConnectionReady())) {

@@ -23,9 +23,7 @@ import com.intellij.openapi.project.Project
 class LanguageSupportStateService {
 
   companion object {
-    @JvmStatic
-    val instance
-      get() = service<LanguageSupportStateService>()
+    fun getService(): LanguageSupportStateService = service()
   }
 
   private val projectToPluginState = mutableMapOf<Project, LanguageSupportState>()

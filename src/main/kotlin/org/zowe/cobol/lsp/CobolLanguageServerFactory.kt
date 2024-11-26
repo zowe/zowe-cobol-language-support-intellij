@@ -14,7 +14,6 @@
 
 package org.zowe.cobol.lsp
 
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.redhat.devtools.lsp4ij.LanguageServerFactory
 import com.redhat.devtools.lsp4ij.client.LanguageClientImpl
@@ -28,7 +27,7 @@ import org.zowe.cobol.state.LanguageSupportStateService
 class CobolLanguageServerFactory : LanguageServerFactory {
 
   override fun createConnectionProvider(project: Project): StreamConnectionProvider {
-    val lsStateService = LanguageSupportStateService.instance
+    val lsStateService = LanguageSupportStateService.getService()
     val pluginState = lsStateService.getPluginState(project) { CobolPluginState(project) }
 
     @OptIn(InitializationOnly::class)
@@ -41,7 +40,7 @@ class CobolLanguageServerFactory : LanguageServerFactory {
   }
 
   override fun createLanguageClient(project: Project): LanguageClientImpl {
-    val lsStateService = LanguageSupportStateService.instance
+    val lsStateService = LanguageSupportStateService.getService()
     val pluginState = lsStateService.getPluginState(project) { CobolPluginState(project) }
 
     @OptIn(InitializationOnly::class)

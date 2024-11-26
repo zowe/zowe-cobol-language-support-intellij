@@ -39,12 +39,12 @@ class CobolPluginStateTestSpec : FunSpec({
   context("CobolPluginStateTestSpec: lateinit vars") {
     val cobolState = spyk(CobolPluginState(mockk<Project>()))
 
-    test("make a try to get not yet initialized lateinit var") {
+    test("make a try to get not yet initialized lateinit var of LSP server") {
       val exception = assertThrows<IllegalStateException> { cobolState.getReadyLSPServerConnection() }
       assertSoftly { exception.message shouldContain "LSP server connection is not ready" }
     }
 
-    test("make a try to get not yet initialized lateinit var") {
+    test("make a try to get not yet initialized lateinit var of LSP client") {
       val exception = assertThrows<IllegalStateException> { cobolState.getReadyLSPClient() }
       assertSoftly { exception.message shouldContain "LSP client is not ready" }
     }

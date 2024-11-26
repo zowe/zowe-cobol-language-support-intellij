@@ -23,8 +23,14 @@ import io.mockk.*
 import org.eclipse.lsp4j.ConfigurationItem
 import org.eclipse.lsp4j.ConfigurationParams
 import org.eclipse.lsp4j.MessageParams
+import org.eclipse.lsp4j.WorkspaceFolder
+import org.zowe.cobol.Sections
+import org.zowe.cobol.VSCodeSettingsAdapterService
+import java.net.URI
+import java.util.concurrent.CompletableFuture
+import kotlin.io.path.toPath
 
-class CobolLanguageClientTestSpec : FunSpec({
+class CobolLanguageClientConfigurationTestSpec : FunSpec({
 
   context("CobolLanguageClientTestSpec.configuration") {
     afterTest {
@@ -37,14 +43,14 @@ class CobolLanguageClientTestSpec : FunSpec({
 
       val projectMock = mockk<Project>()
       val configurationItemMock = mockk<ConfigurationItem> {
-        every { section } returns DIALECT_REGISTRY_SECTION
+        every { section } returns Sections.DIALECT_REGISTRY.toString()
       }
       val configurationParamsMock = mockk<ConfigurationParams> {
         every { items } returns listOf(configurationItemMock)
       }
       val cobolLanguageClient = spyk(CobolLanguageClient(projectMock))
       every { cobolLanguageClient.logMessage(any<MessageParams>()) } answers {
-        if (firstArg<MessageParams>().message.contains(DIALECT_REGISTRY_SECTION)) {
+        if (firstArg<MessageParams>().message.contains(Sections.DIALECT_REGISTRY.toString())) {
           isLogMessageTriggeredCorrectly = true
         }
       }
@@ -68,6 +74,9 @@ class CobolLanguageClientTestSpec : FunSpec({
         every { items } returns listOf(configurationItemMock)
       }
       val cobolLanguageClient = spyk(CobolLanguageClient(projectMock))
+      every {
+        cobolLanguageClient.workspaceFolders()
+      } returns CompletableFuture.completedFuture(listOf(WorkspaceFolder("file:///c/test")))
       every { cobolLanguageClient.logMessage(any<MessageParams>()) } answers {
         if (firstArg<MessageParams>().message.contains(someTestSection)) {
           isLogMessageTriggeredCorrectly = true
@@ -86,14 +95,17 @@ class CobolLanguageClientTestSpec : FunSpec({
       val projectMock = mockk<Project>()
       val configurationItemMock = mockk<ConfigurationItem> {
         every { scopeUri } returns "test"
-        every { section } returns SETTINGS_DIALECT
+        every { section } returns Sections.DIALECTS_SECTION.toString()
       }
       val configurationParamsMock = mockk<ConfigurationParams> {
         every { items } returns listOf(configurationItemMock)
       }
       val cobolLanguageClient = spyk(CobolLanguageClient(projectMock))
+      every {
+        cobolLanguageClient.workspaceFolders()
+      } returns CompletableFuture.completedFuture(listOf(WorkspaceFolder("file:///c/test")))
       every { cobolLanguageClient.logMessage(any<MessageParams>()) } answers {
-        if (firstArg<MessageParams>().message.contains(SETTINGS_DIALECT)) {
+        if (firstArg<MessageParams>().message.contains(Sections.DIALECTS_SECTION.toString())) {
           isLogMessageTriggeredCorrectly = true
         }
       }
@@ -107,17 +119,40 @@ class CobolLanguageClientTestSpec : FunSpec({
     test("process 'workspace/configuration' for cpy-manager paths-local request with scope URI") {
       var isLogMessageTriggeredCorrectly = false
 
+      val fakeUriPath = "file:///c/test"
+      val fakeFinalPath = "final_test_path"
+
+      val vscodeSettingsAdapterService = mockk<VSCodeSettingsAdapterService> {
+        every {
+          getListOfStringsConfiguration(URI.create(fakeUriPath).toPath(), Sections.CPY_LOCAL_PATH)
+        } returns listOf()
+      }
+      mockkObject(VSCodeSettingsAdapterService)
+      every { VSCodeSettingsAdapterService.getService() } returns vscodeSettingsAdapterService
+
+      val cobolConfigsRecognitionService = mockk<CobolConfigsRecognitionService> {
+        every {
+          loadProcessorGroupCopybookPathsConfig(URI.create(fakeUriPath).toPath(), any<ConfigurationItem>(), listOf())
+        } returns listOf(fakeFinalPath)
+      }
+
+      mockkObject(CobolConfigsRecognitionService)
+      every { CobolConfigsRecognitionService.getService() } returns cobolConfigsRecognitionService
+
       val projectMock = mockk<Project>()
       val configurationItemMock = mockk<ConfigurationItem> {
         every { scopeUri } returns "test"
-        every { section } returns SETTINGS_CPY_LOCAL_PATH
+        every { section } returns Sections.CPY_LOCAL_PATH.toString()
       }
       val configurationParamsMock = mockk<ConfigurationParams> {
         every { items } returns listOf(configurationItemMock)
       }
       val cobolLanguageClient = spyk(CobolLanguageClient(projectMock))
+      every {
+        cobolLanguageClient.workspaceFolders()
+      } returns CompletableFuture.completedFuture(listOf(WorkspaceFolder(fakeUriPath)))
       every { cobolLanguageClient.logMessage(any<MessageParams>()) } answers {
-        if (firstArg<MessageParams>().message.contains(SETTINGS_CPY_LOCAL_PATH)) {
+        if (firstArg<MessageParams>().message.contains(fakeFinalPath)) {
           isLogMessageTriggeredCorrectly = true
         }
       }
@@ -125,7 +160,7 @@ class CobolLanguageClientTestSpec : FunSpec({
       val result = cobolLanguageClient.configuration(configurationParamsMock).join()
 
       assertSoftly { isLogMessageTriggeredCorrectly shouldBe true }
-      assertSoftly { result shouldBeEqual listOf() }
+      assertSoftly { result shouldBeEqual listOf(listOf(fakeFinalPath)) }
     }
 
     test("process 'workspace/configuration' for dialect libs request with scope URI") {
@@ -134,14 +169,17 @@ class CobolLanguageClientTestSpec : FunSpec({
       val projectMock = mockk<Project>()
       val configurationItemMock = mockk<ConfigurationItem> {
         every { scopeUri } returns "test"
-        every { section } returns DIALECT_LIBS
+        every { section } returns Sections.DIALECT_LIBS.toString()
       }
       val configurationParamsMock = mockk<ConfigurationParams> {
         every { items } returns listOf(configurationItemMock)
       }
       val cobolLanguageClient = spyk(CobolLanguageClient(projectMock))
+      every {
+        cobolLanguageClient.workspaceFolders()
+      } returns CompletableFuture.completedFuture(listOf(WorkspaceFolder("file:///c/test")))
       every { cobolLanguageClient.logMessage(any<MessageParams>()) } answers {
-        if (firstArg<MessageParams>().message.contains(DIALECT_LIBS)) {
+        if (firstArg<MessageParams>().message.contains(Sections.DIALECT_LIBS.toString())) {
           isLogMessageTriggeredCorrectly = true
         }
       }
@@ -158,14 +196,17 @@ class CobolLanguageClientTestSpec : FunSpec({
       val projectMock = mockk<Project>()
       val configurationItemMock = mockk<ConfigurationItem> {
         every { scopeUri } returns "test"
-        every { section } returns SETTINGS_CPY_EXTENSIONS
+        every { section } returns Sections.CPY_EXTENSIONS.toString()
       }
       val configurationParamsMock = mockk<ConfigurationParams> {
         every { items } returns listOf(configurationItemMock)
       }
       val cobolLanguageClient = spyk(CobolLanguageClient(projectMock))
+      every {
+        cobolLanguageClient.workspaceFolders()
+      } returns CompletableFuture.completedFuture(listOf(WorkspaceFolder("file:///c/test")))
       every { cobolLanguageClient.logMessage(any<MessageParams>()) } answers {
-        if (firstArg<MessageParams>().message.contains(SETTINGS_CPY_EXTENSIONS)) {
+        if (firstArg<MessageParams>().message.contains(Sections.CPY_EXTENSIONS.toString())) {
           isLogMessageTriggeredCorrectly = true
         }
       }
@@ -182,14 +223,17 @@ class CobolLanguageClientTestSpec : FunSpec({
       val projectMock = mockk<Project>()
       val configurationItemMock = mockk<ConfigurationItem> {
         every { scopeUri } returns "test"
-        every { section } returns SETTINGS_SQL_BACKEND
+        every { section } returns Sections.SQL_BACKEND.toString()
       }
       val configurationParamsMock = mockk<ConfigurationParams> {
         every { items } returns listOf(configurationItemMock)
       }
       val cobolLanguageClient = spyk(CobolLanguageClient(projectMock))
+      every {
+        cobolLanguageClient.workspaceFolders()
+      } returns CompletableFuture.completedFuture(listOf(WorkspaceFolder("file:///c/test")))
       every { cobolLanguageClient.logMessage(any<MessageParams>()) } answers {
-        if (firstArg<MessageParams>().message.contains(SETTINGS_SQL_BACKEND)) {
+        if (firstArg<MessageParams>().message.contains(Sections.SQL_BACKEND.toString())) {
           isLogMessageTriggeredCorrectly = true
         }
       }
@@ -206,14 +250,17 @@ class CobolLanguageClientTestSpec : FunSpec({
       val projectMock = mockk<Project>()
       val configurationItemMock = mockk<ConfigurationItem> {
         every { scopeUri } returns "test"
-        every { section } returns SETTINGS_CPY_FILE_ENCODING
+        every { section } returns Sections.CPY_FILE_ENCODING.toString()
       }
       val configurationParamsMock = mockk<ConfigurationParams> {
         every { items } returns listOf(configurationItemMock)
       }
       val cobolLanguageClient = spyk(CobolLanguageClient(projectMock))
+      every {
+        cobolLanguageClient.workspaceFolders()
+      } returns CompletableFuture.completedFuture(listOf(WorkspaceFolder("file:///c/test")))
       every { cobolLanguageClient.logMessage(any<MessageParams>()) } answers {
-        if (firstArg<MessageParams>().message.contains(SETTINGS_CPY_FILE_ENCODING)) {
+        if (firstArg<MessageParams>().message.contains(Sections.CPY_FILE_ENCODING.toString())) {
           isLogMessageTriggeredCorrectly = true
         }
       }
@@ -230,14 +277,17 @@ class CobolLanguageClientTestSpec : FunSpec({
       val projectMock = mockk<Project>()
       val configurationItemMock = mockk<ConfigurationItem> {
         every { scopeUri } returns "test"
-        every { section } returns SETTINGS_COMPILE_OPTIONS
+        every { section } returns Sections.COMPILER_OPTIONS.toString()
       }
       val configurationParamsMock = mockk<ConfigurationParams> {
         every { items } returns listOf(configurationItemMock)
       }
       val cobolLanguageClient = spyk(CobolLanguageClient(projectMock))
+      every {
+        cobolLanguageClient.workspaceFolders()
+      } returns CompletableFuture.completedFuture(listOf(WorkspaceFolder("file:///c/test")))
       every { cobolLanguageClient.logMessage(any<MessageParams>()) } answers {
-        if (firstArg<MessageParams>().message.contains(SETTINGS_COMPILE_OPTIONS)) {
+        if (firstArg<MessageParams>().message.contains(Sections.COMPILER_OPTIONS.toString())) {
           isLogMessageTriggeredCorrectly = true
         }
       }
@@ -254,14 +304,17 @@ class CobolLanguageClientTestSpec : FunSpec({
       val projectMock = mockk<Project>()
       val configurationItemMock = mockk<ConfigurationItem> {
         every { scopeUri } returns "test"
-        every { section } returns SETTINGS_CLIENT_LOGGING_LEVEL
+        every { section } returns Sections.LOGGIN_LEVEL_ROOT.toString()
       }
       val configurationParamsMock = mockk<ConfigurationParams> {
         every { items } returns listOf(configurationItemMock)
       }
       val cobolLanguageClient = spyk(CobolLanguageClient(projectMock))
+      every {
+        cobolLanguageClient.workspaceFolders()
+      } returns CompletableFuture.completedFuture(listOf(WorkspaceFolder("file:///c/test")))
       every { cobolLanguageClient.logMessage(any<MessageParams>()) } answers {
-        if (firstArg<MessageParams>().message.contains(SETTINGS_CLIENT_LOGGING_LEVEL)) {
+        if (firstArg<MessageParams>().message.contains(Sections.LOGGIN_LEVEL_ROOT.toString())) {
           isLogMessageTriggeredCorrectly = true
         }
       }
@@ -278,14 +331,17 @@ class CobolLanguageClientTestSpec : FunSpec({
       val projectMock = mockk<Project>()
       val configurationItemMock = mockk<ConfigurationItem> {
         every { scopeUri } returns "test"
-        every { section } returns SETTINGS_LOCALE
+        every { section } returns Sections.LOCALE.toString()
       }
       val configurationParamsMock = mockk<ConfigurationParams> {
         every { items } returns listOf(configurationItemMock)
       }
       val cobolLanguageClient = spyk(CobolLanguageClient(projectMock))
+      every {
+        cobolLanguageClient.workspaceFolders()
+      } returns CompletableFuture.completedFuture(listOf(WorkspaceFolder("file:///c/test")))
       every { cobolLanguageClient.logMessage(any<MessageParams>()) } answers {
-        if (firstArg<MessageParams>().message.contains(SETTINGS_LOCALE)) {
+        if (firstArg<MessageParams>().message.contains(Sections.LOCALE.toString())) {
           isLogMessageTriggeredCorrectly = true
         }
       }
@@ -302,14 +358,17 @@ class CobolLanguageClientTestSpec : FunSpec({
       val projectMock = mockk<Project>()
       val configurationItemMock = mockk<ConfigurationItem> {
         every { scopeUri } returns "test"
-        every { section } returns SETTINGS_COBOL_PROGRAM_LAYOUT
+        every { section } returns Sections.COBOL_PROGRAM_LAYOUT.toString()
       }
       val configurationParamsMock = mockk<ConfigurationParams> {
         every { items } returns listOf(configurationItemMock)
       }
       val cobolLanguageClient = spyk(CobolLanguageClient(projectMock))
+      every {
+        cobolLanguageClient.workspaceFolders()
+      } returns CompletableFuture.completedFuture(listOf(WorkspaceFolder("file:///c/test")))
       every { cobolLanguageClient.logMessage(any<MessageParams>()) } answers {
-        if (firstArg<MessageParams>().message.contains(SETTINGS_COBOL_PROGRAM_LAYOUT)) {
+        if (firstArg<MessageParams>().message.contains(Sections.COBOL_PROGRAM_LAYOUT.toString())) {
           isLogMessageTriggeredCorrectly = true
         }
       }
@@ -326,14 +385,17 @@ class CobolLanguageClientTestSpec : FunSpec({
       val projectMock = mockk<Project>()
       val configurationItemMock = mockk<ConfigurationItem> {
         every { scopeUri } returns "test"
-        every { section } returns SETTINGS_SUBROUTINE_LOCAL_PATH
+        every { section } returns Sections.SUBROUTINE_LOCAL_PATH.toString()
       }
       val configurationParamsMock = mockk<ConfigurationParams> {
         every { items } returns listOf(configurationItemMock)
       }
       val cobolLanguageClient = spyk(CobolLanguageClient(projectMock))
+      every {
+        cobolLanguageClient.workspaceFolders()
+      } returns CompletableFuture.completedFuture(listOf(WorkspaceFolder("file:///c/test")))
       every { cobolLanguageClient.logMessage(any<MessageParams>()) } answers {
-        if (firstArg<MessageParams>().message.contains(SETTINGS_SUBROUTINE_LOCAL_PATH)) {
+        if (firstArg<MessageParams>().message.contains(Sections.SUBROUTINE_LOCAL_PATH.toString())) {
           isLogMessageTriggeredCorrectly = true
         }
       }
@@ -350,14 +412,17 @@ class CobolLanguageClientTestSpec : FunSpec({
       val projectMock = mockk<Project>()
       val configurationItemMock = mockk<ConfigurationItem> {
         every { scopeUri } returns "test"
-        every { section } returns SETTINGS_CICS_TRANSLATOR
+        every { section } returns Sections.CICS_TRANSLATOR.toString()
       }
       val configurationParamsMock = mockk<ConfigurationParams> {
         every { items } returns listOf(configurationItemMock)
       }
       val cobolLanguageClient = spyk(CobolLanguageClient(projectMock))
+      every {
+        cobolLanguageClient.workspaceFolders()
+      } returns CompletableFuture.completedFuture(listOf(WorkspaceFolder("file:///c/test")))
       every { cobolLanguageClient.logMessage(any<MessageParams>()) } answers {
-        if (firstArg<MessageParams>().message.contains(SETTINGS_CICS_TRANSLATOR)) {
+        if (firstArg<MessageParams>().message.contains(Sections.CICS_TRANSLATOR.toString())) {
           isLogMessageTriggeredCorrectly = true
         }
       }
@@ -380,6 +445,9 @@ class CobolLanguageClientTestSpec : FunSpec({
         every { items } returns listOf(configurationItemMock)
       }
       val cobolLanguageClient = spyk(CobolLanguageClient(projectMock))
+      every {
+        cobolLanguageClient.workspaceFolders()
+      } returns CompletableFuture.completedFuture(listOf(WorkspaceFolder("file:///c/test")))
       every { cobolLanguageClient.logMessage(any<MessageParams>()) } answers {
         if (firstArg<MessageParams>().message.contains(someTestSection)) {
           isLogMessageTriggeredCorrectly = true
