@@ -10,10 +10,15 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.cobol
 
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileSystem
+import java.io.InputStream
+import java.io.OutputStream
 import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
@@ -90,4 +95,69 @@ fun searchForFileInPath(
     )
   }
   return if (foundPaths.isNotEmpty()) foundPaths[0] else null
+}
+
+/**
+ * Create a proxy to provide a [virtualFile] with a new name as "${virtualFile.name}.cbl"
+ * @param virtualFile the virtual file to create a proxy for
+ * @return the virtual file with a modified name
+ */
+fun makeNoExtFileAsCbl(virtualFile: VirtualFile): VirtualFile {
+  return object : VirtualFile() {
+    override fun getName(): String {
+      return "${virtualFile.name}.cbl"
+    }
+
+    override fun getFileSystem(): VirtualFileSystem {
+      return virtualFile.fileSystem
+    }
+
+    override fun getPath(): String {
+      return virtualFile.path
+    }
+
+    override fun isWritable(): Boolean {
+      return virtualFile.isWritable
+    }
+
+    override fun isDirectory(): Boolean {
+      return virtualFile.isDirectory
+    }
+
+    override fun isValid(): Boolean {
+      return virtualFile.isValid
+    }
+
+    override fun getParent(): VirtualFile {
+      return virtualFile.parent
+    }
+
+    override fun getChildren(): Array<VirtualFile> {
+      return virtualFile.children
+    }
+
+    override fun getOutputStream(requestor: Any?, newModificationStamp: Long, newTimeStamp: Long): OutputStream {
+      return virtualFile.getOutputStream(requestor, newModificationStamp, newTimeStamp)
+    }
+
+    override fun contentsToByteArray(): ByteArray {
+      return virtualFile.contentsToByteArray()
+    }
+
+    override fun getTimeStamp(): Long {
+      return virtualFile.timeStamp
+    }
+
+    override fun getLength(): Long {
+      return virtualFile.length
+    }
+
+    override fun refresh(asynchronous: Boolean, recursive: Boolean, postRunnable: Runnable?) {
+      virtualFile.refresh(asynchronous, recursive, postRunnable)
+    }
+
+    override fun getInputStream(): InputStream {
+      return virtualFile.inputStream
+    }
+  }
 }

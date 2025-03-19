@@ -5,6 +5,22 @@ on: [push, workflow_dispatch]
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        postfix: [ "231","233","242","243" ]
+        include:
+          - product: "231"
+            distribution: "zulu"
+            java: "17"
+          - product: "233"
+            distribution: "zulu"
+            java: "17"
+          - product: "242"
+            distribution: "zulu"
+            java: "21"
+          - product: "243"
+            distribution: "zulu"
+            java: "21"
     steps:
       - name: Checkout the plugin GitHub repository
         uses: actions/checkout@v4
@@ -12,8 +28,8 @@ jobs:
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
-          distribution: zulu
-          java-version: 17
+          distribution: ${{ matrix.distribution }}
+          java-version: ${{ matrix.java }}
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
@@ -27,10 +43,14 @@ jobs:
       - name: Test plugin
         shell: bash
         run: ./gradlew test
+        env:
+          ZOWE_EXPLORER_POSTFIX: ${{ matrix.product }}
 
       - name: Build plugin's binary
         shell: bash
         run: ./gradlew buildPlugin
+        env:
+          ZOWE_EXPLORER_POSTFIX: ${{ matrix.product }}
 
       - name: Prepare Plugin Artifact
         id: artifact

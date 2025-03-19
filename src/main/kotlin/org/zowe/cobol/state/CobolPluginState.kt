@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 package org.zowe.cobol.state
@@ -40,7 +41,7 @@ const val COBOL_PLUGIN_NOTIFICATION_ID = "org.zowe.cobol.CobolNotificationId"
 
 // https://github.com/eclipse-che4z/che-che4z-lsp-for-cobol
 private const val VSIX_NAME = "cobol-language-support"
-private const val VSIX_VERSION = "2.1.2"
+private const val VSIX_VERSION = "2.4.0"
 const val TEXTMATE_BUNDLE_NAME = "cobol"
 
 /**
