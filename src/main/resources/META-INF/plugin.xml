@@ -8,7 +8,7 @@
   <name>Zowe™ COBOL Language Support</name>
 
   <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
-  <vendor email="zowe.robot@gmail.com" url="https://github.com/zowe/zowe-cobol-intellij">Zowe</vendor>
+  <vendor email="zowe.robot@gmail.com" url="https://github.com/zowe/zowe-cobol-intellij">zowe-binary-project-a-series-of-lf-projects-llc</vendor>
 
   <!-- Description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
        Simple HTML elements (text formatting, paragraphs, and lists) can be added inside of <![CDATA[ ]]> tag.
