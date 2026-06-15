@@ -1,4 +1,4 @@
-# Zowe™ COBOL Language Support plug-in for IntelliJ IDEA™
+# Zowe® COBOL Language Support plug-in for IntelliJ IDEA™
 
 Provides: 
 - syntax highlighting support using TextMate bundle from [eclipse-che4z/che-che4z-lsp-for-cobol](https://github.com/eclipse-che4z/che-che4z-lsp-for-cobol)

@@ -5,7 +5,7 @@
 
   <!-- Public plugin name should be written in Title Case.
        Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-name -->
-  <name>Zowe™ COBOL Language Support</name>
+  <name>Zowe® COBOL Language Support</name>
 
   <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
   <vendor email="zowe.robot@gmail.com" url="https://github.com/zowe/zowe-cobol-intellij">zowe-binary-project-a-series-of-lf-projects-llc</vendor>
@@ -14,7 +14,7 @@
        Simple HTML elements (text formatting, paragraphs, and lists) can be added inside of <![CDATA[ ]]> tag.
        Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-description -->
   <description><![CDATA[
-    Zowe™ COBOL Language Support. Provides TextMate syntax highlighting and LSP support for the IBM Enterprise COBOL
+    Zowe® COBOL Language Support. Provides TextMate syntax highlighting and LSP support for the IBM Enterprise COBOL
   ]]></description>
 
   <!-- Product and plugin compatibility requirements.
@@ -22,10 +22,21 @@
   <depends>com.intellij.modules.platform</depends>
   <depends>com.redhat.devtools.lsp4ij</depends>
   <depends>org.jetbrains.plugins.textmate</depends>
+  <depends optional="true"
+           config-file="plugin-withZoweExplorer.xml">
+    org.zowe.explorer
+  </depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <notificationGroup displayType="STICKY_BALLOON"
                        id="org.zowe.cobol.CobolNotificationId"/>
+    <fileType name="cobol-zowe"
+              implementationClass="org.zowe.cobol.CobolFileType"
+              language="COBOL-Zowe"
+              fieldName="INSTANCE"/>
+    <editorHighlighterProvider filetype="cobol-zowe" implementationClass="org.zowe.cobol.CobolEditorHighlighterProvider"/>
+    <lang.syntaxHighlighterFactory language="COBOL-Zowe"
+                                   implementationClass="org.zowe.cobol.CobolSyntaxHighlighterFactory"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.redhat.devtools.lsp4ij">
@@ -41,6 +52,10 @@
     <fileNamePatternMapping patterns="*.cbl;*.cob;*.cobol;*.cpy;*.copy"
                             serverId="org.zowe.cobol.lsp.CobolLanguageServerFactory"
                             languageId="cobol"/>
+    <fileNamePatternMapping patterns="*"
+                            serverId="org.zowe.cobol.lsp.CobolLanguageServerFactory"
+                            languageId="cobol"
+                            documentMatcher="org.zowe.cobol.CobolDocumentMatcher"/>
   </extensions>
 
   <projectListeners>

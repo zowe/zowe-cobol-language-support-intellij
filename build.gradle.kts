@@ -10,6 +10,7 @@
  * Contributors:
  *   IBA Group
  *   Zowe Community
+ *   Uladzislau Kalesnikau
  */
 
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
@@ -17,6 +18,49 @@ import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 //!IMPORTANT!: to refer "libs", use ./gradle/libs.versions.toml
 
 fun properties(key: String) = providers.gradleProperty(key)
+
+// https://github.com/kotest/kotest-intellij-plugin/blob/master/build.gradle.kts
+data class PluginDescriptor(
+  val jvmTargetVersion: JavaVersion, // the Java version to use during the plugin build
+  val since: String, // earliest version string this is compatible with
+  val getUntil: () -> Provider<String>, // latest version string this is compatible with, can be wildcard like 202.*
+  // https://github.com/JetBrains/gradle-intellij-plugin#intellij-platform-properties
+  val sdkVersion: String, // the version string passed to the intellij sdk gradle plugin
+  val postfix: String // used as the indicator to depend on a specific Zowe Explorer version
+)
+
+val plugins = listOf(
+  PluginDescriptor(
+    jvmTargetVersion = JavaVersion.VERSION_17,
+    since = properties("pluginSinceBuild").get(),
+    getUntil = { provider { "232.*" } },
+    sdkVersion = "2023.2",
+    postfix = "231"
+  ),
+  PluginDescriptor(
+    jvmTargetVersion = JavaVersion.VERSION_17,
+    since = "233.11799",
+    getUntil = { provider { "241.*" } },
+    sdkVersion = "2023.3",
+    postfix = "233"
+  ),
+  PluginDescriptor(
+    jvmTargetVersion = JavaVersion.VERSION_21,
+    since = "242.20224",
+    getUntil = { provider { "242.*" } },
+    sdkVersion = "2024.2",
+    postfix = "242"
+  ),
+  PluginDescriptor(
+    jvmTargetVersion = JavaVersion.VERSION_21,
+    since = "243.12818",
+    getUntil = { provider { null } },
+    sdkVersion = "2024.3",
+    postfix = "243"
+  )
+)
+val postfix = System.getenv("ZOWE_EXPLORER_POSTFIX") ?: "231"
+val descriptor = plugins.first { it.postfix == postfix }
 
 plugins {
   alias(libs.plugins.gradle) // IntelliJ Platform Gradle Plugin
@@ -27,7 +71,8 @@ plugins {
 
 group = properties("pluginGroup").get()
 version = properties("pluginVersion").get()
-val lsp4ijVersion = "0.7.0"
+val lsp4ijVersion = "0.11.0"
+val zoweExplorerVersion = "2.2.0-rc.1-$postfix"
 
 repositories {
   mavenCentral()
@@ -38,13 +83,13 @@ repositories {
 }
 
 java {
-  sourceCompatibility = JavaVersion.VERSION_17
-  targetCompatibility = JavaVersion.VERSION_17
+  sourceCompatibility = descriptor.jvmTargetVersion
+  targetCompatibility = descriptor.jvmTargetVersion
 }
 
 kotlin {
   jvmToolchain {
-    languageVersion.set(JavaLanguageVersion.of(JavaVersion.VERSION_17.toString()))
+    jvmToolchain(JavaLanguageVersion.of(descriptor.jvmTargetVersion.toString()).asInt())
   }
 }
 
@@ -52,10 +97,10 @@ kotlin {
 // Read more: https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin.html
 intellijPlatform {
   pluginConfiguration {
-    version = properties("platformVersion").get()
+    version = "${properties("pluginVersion").get()}-${descriptor.since.substringBefore(".")}"
     ideaVersion {
-      sinceBuild = properties("pluginSinceBuild").get()
-      untilBuild = provider { null }
+      sinceBuild = descriptor.since
+      untilBuild = descriptor.getUntil()
     }
   }
 }
@@ -64,14 +109,16 @@ dependencies {
   // ===== Runtime env setup ===
   // IntelliJ
   intellijPlatform {
-    intellijIdeaCommunity(properties("platformVersion").get(), useInstaller = false)
+    intellijIdeaCommunity(descriptor.sdkVersion, useInstaller = false)
     jetbrainsRuntime()
     instrumentationTools()
     bundledPlugin("org.jetbrains.plugins.textmate")
-////  pluginsRepositories {
-////    custom("https://plugins.jetbrains.com/plugins/nightly/23257")
-////  }
+//    pluginsRepositories {
+//      custom("https://plugins.jetbrains.com/plugins/nightly/23257")
+//    }
     plugin("com.redhat.devtools.lsp4ij:$lsp4ijVersion")
+//    localPlugin("D:\\IBA\\IJMP\\zowe-explorer-intellij\\build\\distributions\\zowe-explorer-2.2.0-2024.3.zip")
+    plugin("zowe-explorer:$zoweExplorerVersion@preview")
     testFramework(TestFrameworkType.Plugin.Java)
   }
   // Gson
